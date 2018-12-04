@@ -36,15 +36,8 @@ FusionEKF::FusionEKF() {
     * Finish initializing the FusionEKF.
     * Set the process and measurement noises
   */
-  noise_ax = 9;
-  noise_ay = 9;
+  
 
-  MatrixXd P(4, 4);
-  P <<
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1000, 0,
-    0, 0, 0, 1000;
 
   MatrixXd F(4, 4);
   F<<
@@ -52,6 +45,7 @@ FusionEKF::FusionEKF() {
       0, 1, 0, 0,
       0, 0, 1, 0,
       0, 0, 0, 1;
+  ekf_.F_ = F;
 }
 
 /**
@@ -75,23 +69,34 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // first measurement
     cout << "Initializeing Kalman Filter" << endl;
     cout << "EKF: " << endl;
-    x_ = VectorXd(4);
-    px = measurement_pack.raw_measurements_(0);
-    py = measurement_pack.raw_measurements_(1);
+    VectorXd x_(4);
+    float px = measurement_pack.raw_measurements_(0);
+    float py = measurement_pack.raw_measurements_(1);
     previous_timestamp_ = measurement_pack.timestamp_;
     float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
-
-    F_ <<
+    float noise_ax = 9;
+    float noise_ay = 9;
+    
+    MatrixXd F(4, 4);
+    F <<
       1, 0, dt, 0,
       0, 1, 0, dt,
       0, 0, 1, 0,
       0, 0, 0, 1;
+    MatrixXd P(4, 4);
+    P <<
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1000, 0,
+      0, 0, 0, 1000;
 
-    flaot dt2 = dt * dt;
+    ekf_.P_ = P;
+    float dt2 = dt * dt;
     float dt3 = dt2 * dt;
     float dt4 = dt3 * dt;
   
-    Q_ <<
+    MatrixXd Q(4, 4);
+    Q <<
       dt4/4*noise_ax, 0,              dt3/2*noise_ax, 0,
       0,              dt4/4*noise_ay, 0,              dt3/2*noise_ay,
       dt3/2*noise_ay, 0,              dt2*noise_ax,   0,
@@ -105,16 +110,17 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float phi = measurement_pack.raw_measurements_(2);
       float rhodot = measurement_pack.raw_measurements_(3);
      
-      x_ << rho*cos(x), rho*sin(x), rhodot*cos(x), rhodot*sin(x);
-      Hj_ = Tools::CalculateJacobian(x_);	
-      ekf_.Init(x_, P, F, Hj_, R_radar_, Q_);      
+      x_ << rho*cos(phi), rho*sin(phi), rhodot*cos(phi), rhodot*sin(phi);
+      Tools tools;
+      Hj_ = tools.CalculateJacobian(x_);	
+      ekf_.Init(x_, P, F, Hj_, R_radar_, Q);      
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
       Initialize state.
       */
       x_ << px, py, 0, 0;
-      ekf_.Init(x_, P, F, H_laser_, R_laser_, Q_);
+      ekf_.Init(x_, P, F, H_laser_, R_laser_, Q);
     }
 
     // done initializing, no need to predict or update
