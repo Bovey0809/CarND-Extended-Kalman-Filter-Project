@@ -106,6 +106,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float rhodot = measurement_pack.raw_measurements_(3);
      
       x_ << rho*cos(x), rho*sin(x), rhodot*cos(x), rhodot*sin(x);
+      Hj_ = Tools::CalculateJacobian(x_);	
       ekf_.Init(x_, P, F, Hj_, R_radar_, Q_);      
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
