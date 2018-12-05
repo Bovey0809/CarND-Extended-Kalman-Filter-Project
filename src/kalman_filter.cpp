@@ -1,8 +1,8 @@
 #include "kalman_filter.h"
-
+#include <iostream>
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-
+using namespace std;
 // Please note that the Eigen library does not initialize 
 // VectorXd or MatrixXd objects with zeros upon creation.
 
@@ -36,6 +36,7 @@ void KalmanFilter::Update(const VectorXd &z) {
     * update the state by using Kalman Filter equations
   */
   VectorXd z_pred = H_ * x_;
+  std::cout<<"z_pred:"<<z_pred.size()<<std::endl;
   VectorXd y = z - z_pred;
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
@@ -48,6 +49,7 @@ void KalmanFilter::Update(const VectorXd &z) {
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
+  
 
   // VectorXd zp = H_ * x_;
   // VectorXd y = z - zp;
@@ -71,8 +73,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   rho = sqrt(x_(0) * x_(0) + x_(1) * x_(1));
   // The phi should be normalized to -pi and pi.
   phi = atan2(x_(1), x_(0));
-  
-  
+  //cout<<"RHO:"<<rho<<"PHI:"<<phi<<endl; No problem.
   if (fabs(rho) < 0.0001) {
     rhodot = 0;
   }
@@ -81,22 +82,31 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   {
     rhodot = (x_(0) * x_(2) + x_(1) * x_(3)) / rho;
   }
-  
+  // cout<<"rho dot:"<<rhodot<<endl;
   VectorXd z_pred(3);
   z_pred << rho, phi, rhodot;
-  
+  // cout<<"z prediction:"<<z_pred<<endl;
   VectorXd y = z - z_pred;
+  // cout<<"y:"<<y<<endl;
   MatrixXd Ht = H_.transpose();
+  // cout<<"H_:"<<H_.size()<<endl<<"Ht:"<<Ht.size()<<endl;
+  // cout<<"P_.shape:"<<P_.size()<<endl;
+  // cout<<"R_.shape"<<R_.size()<<endl;
+
   MatrixXd S = H_ * P_ * Ht + R_;
+  // cout<<"S:"<<S<<endl;
   MatrixXd Si = S.inverse();
   MatrixXd PHt = P_ * Ht;
   MatrixXd K = PHt * Si;
-
+  // cout<<"K:"<<K<<endl;
   //new estimate
+  // cout << "K x y:" << K*y<<endl;
   x_ = x_ + (K * y);
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
+  // cout<<"x_: "<<x_<<endl;
+  // cout<<"P_: "<<P_<<endl;
   // VectorXd y = z - z_pred;
   // MatrixXd Ht = H_.transpose();
   // MatrixXd S = H_ * P_ * Ht + R_;
