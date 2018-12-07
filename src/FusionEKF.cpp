@@ -9,7 +9,7 @@ using Eigen::VectorXd;
 using std::vector;
 
 /*
- * Constructor.
+ * Constructor.n
  */
 FusionEKF::FusionEKF() {
   is_initialized_ = false;
@@ -59,6 +59,9 @@ FusionEKF::FusionEKF() {
     0, 0, 1, 0,
     0, 0, 0, 1;
 
+  H_laser_<<
+    1, 0, 0, 0,
+    0, 1, 0, 0;
   ekf_.Init(x_, P_, F_, H_laser_, R_laser_, Q_);
 }
 
