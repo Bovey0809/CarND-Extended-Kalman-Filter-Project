@@ -36,7 +36,7 @@ void KalmanFilter::Update(const VectorXd &z) {
     * update the state by using Kalman Filter equations
   */
   VectorXd z_pred = H_ * x_;
-  std::cout<<"z_pred:"<<z_pred.size()<<std::endl;
+  // std::cout<<"z_pred:"<<z_pred.size()<<std::endl;
   VectorXd y = z - z_pred;
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
@@ -50,18 +50,6 @@ void KalmanFilter::Update(const VectorXd &z) {
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
   
-
-  // VectorXd zp = H_ * x_;
-  // VectorXd y = z - zp;
-  // MatrixXd Ht = H_.transpose();
-  // MatrixXd S = H_ * P_ * Ht + R_;
-  // MatrixXd K = P_ * Ht * S.inverse();
-
-  // // New estimate
-  // x_ = x_ + K * y;
-  // long x_size = x_.size();
-  // MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  // P_ = (I - K * H_) * P_;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
@@ -87,6 +75,10 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   z_pred << rho, phi, rhodot;
   // cout<<"z prediction:"<<z_pred<<endl;
   VectorXd y = z - z_pred;
+  // normalize the y into range(-pi, pi)
+  
+  y(1) > M_PI ? y(1) -= 2 * M_PI : (y(1) < -1 * M_PI ? y(1) += 2 * M_PI : y(1) );
+  
   // cout<<"y:"<<y<<endl;
   MatrixXd Ht = H_.transpose();
   // cout<<"H_:"<<H_.size()<<endl<<"Ht:"<<Ht.size()<<endl;
